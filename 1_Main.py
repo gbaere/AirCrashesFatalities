@@ -1,16 +1,28 @@
-# This is a sample Python script.
+import streamlit as st
+import pandas as pd
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+st.set_page_config(
+    page_title="Aircraft accident and fatality analysis application",
+    page_icon="✈️",
+    layout="wide"
+)
+
+# Carregar/processar/tratar o conjunto de dados
+def load_and_process_data():
+    dataset = pd.read_csv("datasets/air_crashes_fatalities_1948_at_2007.csv", sep=';', encoding='latin-1', index_col=0)
+    return dataset
+
+# Link para o GitHub
+st.sidebar.markdown("[GitHub Repository](https://github.com/gbaere)")
+
+if "data" not in st.session_state:
+
+    st.session_state["data"] = load_and_process_data()
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+else:
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+
