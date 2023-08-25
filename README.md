@@ -2,8 +2,9 @@
 *App to analyze and visualize data of air accidents with fatalities in the world*
 
 Um pequeno projeto para visualização de acidêntes aéreos com fatalidade que ocorreram ao longo do tempo. Alguns desafios a solucionar, o arquivo csv não possui a latitude e 
-longitude dos acidêntes, somente a descrição do local, que ajuda, entretando, meu objetivo inicial era exibir os pontos exatos do acidêntes e o número de vitimas e sobreviventes,
-entretando, criei um script para obter a latitude e longitude através do metódo abaixo:
+longitude dos acidêntes, somente a descrição do local, entretando, meu objetivo inicial era exibir os pontos exatos do acidêntes e o número de vitimas e sobreviventes. 
+
+Portanto, criei um script para obter a latitude e longitude para preencher as novas colunas (Latitude, Longitude) do meu dataframe, após o término criei um novo arquivo csv em que o nome adicionei o sufixo "clean. Abaixo está método para obter as coordenadas:
 
 ```python
 def get_coordinates(location):
