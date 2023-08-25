@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\dataset\air_crashes_fatalities_1948_at_2007_clean.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
