@@ -1,11 +1,7 @@
-import matplotlib.pyplot as plt
 import pandas as pd
-import requests
-import seaborn as sns
-import statsmodels.api as sm
 import streamlit as st
-import plotly.express as px
-
+import custom.functions as custom
+import custom.mapas as custom_mapas
 
 st.set_page_config(
     page_title="Aircraft accident and fatality analysis application",
@@ -16,117 +12,125 @@ st.set_page_config(
 
 # Carregar/processar/tratar o conjunto de dados
 def load_and_process_data():
-    data = pd.read_csv("dataset/air_crashes_fatalities_1948_at_2007_cleaned_.csv", sep=';', encoding='latin-1', index_col=0)
-    return data
+    dataset = pd.read_csv("dataset/air_crashes_clean.csv", sep=';', encoding="Latin-1")
 
+    dataset['latitude_srt'] = dataset['Latitude'].astype(str)
+    dataset['longitude_srt'] = dataset['Longitude'].astype(str)
 
-def analise_acidentes_plotly(data_frame):
-    # Convertendo a coluna Date para o formato de data
-    data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%d/%m/%Y')
+    dataset['latitude_srt'] = dataset['latitude_srt'].apply(custom.format_coordinates)
+    dataset['longitude_srt'] = dataset['longitude_srt'].apply(custom.format_coordinates)
 
-    # Transformando a coluna Date em ano
-    data_frame['Crash.Year'] = data_frame['Date'].dt.year
+    dataset['Latitude'] = dataset['latitude_srt']
+    dataset['Longitude'] = dataset['longitude_srt']
 
-    # Restante do código da função analise_acidentes
-    grouped_data = data_frame.groupby('Crash.Year').agg(No_Of_Crashes=('Date', 'count'), No_Fatalities=('Fatalities', 'sum')).reset_index()
+    dataset = dataset.drop(['latitude_srt', 'longitude_srt'], axis=1)
 
-    # Criando o gráfico com Plotly Express
-    fig = px.line(grouped_data, x='Crash.Year', y='No_Of_Crashes', title='Número de acidêntes ao longo do tempo',
-                  labels={'Crash.Year': 'Ano', 'No_Of_Crashes': 'Numero de acidêntes'})
-
-    # Adicionando a suavização (média)
-    smoothed_data = grouped_data.rolling(window=5).mean()  # Janela de 5 anos para suavização
-    fig.add_scatter(x=smoothed_data['Crash.Year'], y=smoothed_data['No_Of_Crashes'], mode='lines', name='Média suavizada',
-                    line=dict(color='red'))
-
-    fig.update_layout(height=500, width=1000)
-
-    # Exibir o gráfico no Streamlit
-    st.plotly_chart(fig)
+    return dataset
 
 
 
-# Função para formatar a localização para a URL da API do Mapbox
-def format_location(location):
-    if isinstance(location, str):
-        formatted_name = location.replace(",", "")  # Remover vírgulas
-        formatted_name = formatted_name.replace(" ", "%20")  # Substituir espaços por %20
-        return formatted_name
-    else:
-        return ""
 
-
-# Função para obter as coordenadas de uma cidade usando o Mapbox Geocoding API
-def get_coordinates(location):
-    if isinstance(location, str):
-        url = f"https://nominatim.openstreetmap.org/search?q={format_location(location)}&format=json"
-        st.write(url)
-        response = requests.get(url)
-        data = response.json()
-
-        if data:
-            latitude = float(data[0]['lat'])
-            longitude = float(data[0]['lon'])
-            return latitude, longitude
-        else:
-            return None, None
-    else:
-        return None, None
-
-
-def transform_int(value):
-    return int(value)
 
 
 if "data" not in st.session_state:
-    st.session_state["data"] = load_and_process_data()
+    st.session_state.data = load_and_process_data()
 else:
-    dataset = st.session_state["data"]
-
-    # Removendo as localidades vazias
-    dataset = dataset.dropna(subset=['Location'])
-    # só para garantir
-    dataset = dataset[dataset['Location'].notna()]
-
-    # Adicionar colunas de latitude e longitude ao DataFrame, pois o arquivo csv não possui essas informações
-    #dataset["Latitude"], dataset["Longitude"] = zip(*dataset["Location"].apply(get_coordinates))
-
-    # Filtrar cidades com coordenadas válidas
-    #dataset = dataset.dropna(subset=["Latitude", "Longitude"])
-
-    # Removendo as linhas com Fatalities igual a 0
-    dataset = dataset[dataset['Fatalities'] != 0]
-
-    # Criar um arquivo CSV a partir do DataFrame
-    #dataset.to_csv('dataset/air_crashes_fatalities_1948_at_2007_clean.csv', index=False)
+    dataset = st.session_state.data
 
     # Extraindo o ano
-    years = pd.DatetimeIndex(dataset['Date']).year
+    years = dataset['Date'].apply(lambda x: pd.to_datetime(x, format='%d/%m/%Y', dayfirst=True).year)
     min_year = years.min()
     max_year = years.max()
     years_values = range(min_year, max_year + 1)
     # Sidebar filtro periodo
     year_filter = st.sidebar.select_slider('Escolha o periodo:', options=years_values, value=(min_year, max_year))
 
-    # Sidebar filtro vitimas
+    # Sidebar filtro vitimas fatais
     min_fatalities = dataset.Fatalities.min()
     max_fatalities = dataset.Fatalities.max()
     fatalities_values = range(min_fatalities, max_fatalities + 1)
-    fatalities_filter = st.sidebar.select_slider('Vitímas:', options=fatalities_values,
+    fatalities_filter = st.sidebar.select_slider('Vitímas Fatais:', options=fatalities_values,
                                                  value=(min_fatalities, max_fatalities))
 
+    # Obter a lista de tipos de investigação únicos
+    unique_investigation_types = dataset["Investigation Type"].unique()
+    default_investigation = unique_investigation_types[0]
+    investigation_filter = st.sidebar.multiselect("Tipo de Ocorrência:", unique_investigation_types,
+                                                  default=default_investigation)
 
-    dataset_filtered = dataset[(pd.DatetimeIndex(dataset['Date']).year >= year_filter[0]) &
-                               (pd.DatetimeIndex(dataset['Date']).year <= year_filter[1]) &
-                               (dataset['Fatalities'] >= fatalities_filter[0]) &
-                               (dataset['Fatalities'] <= fatalities_filter[1])]
+    # Sidebar filtro localidade
+    unique_country_types = sorted(dataset["Country"].dropna().unique())
+    default_country = unique_country_types[1]
+    country_filter = st.sidebar.selectbox(label="Escolha um local:",
+                                          options=unique_country_types,
+                                          index=unique_country_types.index(default_country))
+
+    # Sidebar filtro tipo de aeronaves
+    aircrafts = sorted(dataset["Aircraft Category"].unique())
+    default_country = unique_investigation_types[0]
+    # Filtrar valores vazios ou nulos e criar a lista de opções finais
+    unique_aircraft_types = [value for value in aircrafts if pd.notna(value) and value != '']
+    default_aircraft = unique_aircraft_types[0]
+    aircraft_filter = st.sidebar.multiselect("Tipo de Aeronave:", unique_aircraft_types, default=default_aircraft)
+
+    # Validandos os dados antes de filtrar
+
+    if country_filter:
+        country_condition = dataset["Country"] == country_filter
+    else:
+        country_condition = True  # Sem filtro de localidade
+
+    if investigation_filter:
+        investigation_condition = dataset["Investigation Type"].isin(investigation_filter)
+    else:
+        investigation_condition = True  # Sem filtro de investigação
+
+    if aircraft_filter:
+        aircraft_condition = dataset["Aircraft Category"].isin(aircraft_filter)
+    else:
+        aircraft_condition = True  # Sem filtro de categoria de aeronaves
+
+    # Aplicando todas as condições de filtro
+    year_condition = ((pd.DatetimeIndex(dataset['Date']).year >= year_filter[0]) &
+                      (pd.DatetimeIndex(dataset['Date']).year <= year_filter[1]))
+
+    fatalities_condition = ((dataset['Fatalities'] >= fatalities_filter[0]) &
+                            (dataset['Fatalities'] <= fatalities_filter[1]))
+
+    final_condition = year_condition & fatalities_condition & investigation_condition & aircraft_condition & country_condition
+
+    if final_condition.any():
+        dataset_filtered = dataset[final_condition]
+    else:
+        dataset_filtered = dataset.copy()
 
     st.write(dataset_filtered)
 
+    if not dataset_filtered.empty:
+        # Filtrar as linhas com Latitude e Longitude diferentes de 0, não vazias e não NaN
+        dataset_filtered = dataset_filtered[
+            ~(
+                    (dataset_filtered['Latitude'] == "00.0") |
+                    (dataset_filtered['Longitude'] == "00.0") |
+                    dataset_filtered['Latitude'].isna() |
+                    dataset_filtered['Longitude'].isna()
+            )
+        ]
+
     # Exibir o gráfico
-    analise_acidentes_plotly(dataset_filtered)
+    custom_mapas.analise_acidentes_plotly(dataset_filtered)
+
+    custom_mapas.analise_fatalidade_e_lesoes(dataset_filtered)
+
+    custom_mapas.analise_aeronaves(dataset_filtered)
+
+    tab1, tab2 = st.tabs(["Fabricantes", "Detalhes"])
+
+    with tab1:
+        custom_mapas.analise_fabricante_aeronaves(dataset_filtered)
+    with tab2:
+        custom_mapas.analise_fabricante_aeronaves_detalhes_tabela(dataset_filtered)
 
 
-
-# Link para o GitHub
-st.sidebar.markdown("[GitHub Repository](https://github.com/gbaere)")
+    # Link para o GitHub
+    st.sidebar.markdown("[GitHub Repository](https://github.com/gbaere)")
