@@ -30,6 +30,8 @@ def main():
 if __name__ == "__main__":
     main()
 
+    st.subheader("Análise de dados dos eventos aéreos no mundo")
+
     if "data" in st.session_state:
         #if "dataset" not in locals():
         dataset, dataset_filtered = st.session_state.data, st.session_state.data
@@ -96,7 +98,6 @@ if __name__ == "__main__":
             st.write("Tabela:", dataset_filtered)
         with tab2:
             rota.mostra_local(dataset_filtered)
-
 
         # Exibir o gráfico
         custom_mapas.analise_acidentes_plotly(dataset_filtered)

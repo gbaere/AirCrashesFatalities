@@ -2,12 +2,9 @@ import folium
 import plotly.graph_objs as go
 import streamlit as st
 import requests
-import pandas as pd
 from urllib.parse import quote
-
 from folium import plugins
 from streamlit_folium import folium_static
-
 
 def format_location(location):
     return quote(location)
@@ -83,7 +80,7 @@ def mostra_local(data_frame):
                                  height="%100")
     locations = list(zip(data_frame["Latitude"], data_frame["Longitude"]))
 
-    popup_info = data_frame["Make"] + '<br>' + data_frame["Aircraft Category"] + '<br>' + data_frame["Country"]
+    popup_info = data_frame["Investigation Type"] + '<br>' + data_frame["Make"] + '<br>' + data_frame["Aircraft Category"] + '<br>' + data_frame["Country"]
 
     cluster = plugins.MarkerCluster(locations=locations,
                                     popups=popup_info.tolist())
