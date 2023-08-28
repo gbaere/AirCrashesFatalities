@@ -1,11 +1,9 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-import matplotlib.pyplot as plt
-
 
 def analise_acidentes_plotly(data_frame):
-
+    data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%d/%m/%Y')
     data_frame['ANO'] = data_frame['Date'].dt.year
     data_frame['INVESTIGATION'] = data_frame["Investigation Type"].str.strip()
 
@@ -23,7 +21,7 @@ def analise_acidentes_plotly(data_frame):
         tickformat="%b %Y"  # Formato: Mês Ano com quatro dígitos
     )
 
-    st.plotly_chart(fig ,use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def analise_fatalidade_e_lesoes(data_frame):
@@ -56,8 +54,7 @@ def analise_fatalidade_e_lesoes(data_frame):
     fig.update_traces(texttemplate='%{y}', textposition='inside')  # Exibe os valores de y nas barras
 
     fig.update_layout(barmode='stack')  # Modo de empilhamento das barras
-    fig.update_layout(height=500, width=1000)
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def analise_aeronaves(data_frame):
@@ -78,8 +75,7 @@ def analise_aeronaves(data_frame):
                  labels={'Crash.Year': 'Ano', 'Count': 'Quantidade', 'Aircraft Category': 'Categoria de Aeronave'})
 
     fig.update_layout(barmode='stack')  # Barras empilhadas
-    fig.update_layout(height=500, width=1000)
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
@@ -105,41 +101,7 @@ def analise_fabricante_aeronaves(data_frame):
                  labels={'Crash.Year': 'Ano', 'Count': 'Quantidade', 'Make': 'Fabricante/Modelo'})
 
     fig.update_layout(barmode='stack')  # Barras empilhadas
-    fig.update_layout(height=500, width=1000)
-    st.plotly_chart(fig)
-
-
-def analise_fabricante_aeronaves_detalhes(data_frame):
-    # Convertendo a coluna Date para o formato de data
-    data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%d/%m/%Y')
-    # Transformando a coluna Date em ano
-    data_frame['Crash.Year'] = data_frame['Date'].dt.year
-
-    #max_year = data_frame['Crash.Year'].max()
-
-    #data_frame['Crash.Year'] = data_frame['Crash.Year'].append(pd.Series([max_year+1]))
-
-    # Contando os tipos de Aircraft Category por ano
-    grouped_data = data_frame.groupby(['Crash.Year', 'Make'])['Make'].count().unstack(fill_value=0).reset_index()
-
-    # Reformatar o DataFrame para o formato apropriado para o gráfico de barras empilhadas
-    stacked_data = pd.melt(grouped_data, id_vars='Crash.Year', value_vars=grouped_data.columns[1:], var_name='Make', value_name='Count')
-
-    # Calcular as porcentagens
-    total_per_year = stacked_data.groupby('Crash.Year')['Count'].transform('sum')
-    stacked_data['Percentage'] = (stacked_data['Count'] / total_per_year) * 100
-
-    # Criar uma coluna com as informações de quantidade e porcentagem para a legenda
-    stacked_data['Legend'] = stacked_data.apply(lambda row: f"{row['Make']} - Qtd: {row['Count']} ({row['Percentage']:.2f}%)", axis=1)
-
-    fig = px.bar(stacked_data,
-                 x='Crash.Year', y='Count', color='Legend',  # Usar a nova coluna 'Legend' para a cor
-                 title='Distribuição de fabricantes das aeronaves envolvidas no período',
-                 labels={'Crash.Year': 'Ano', 'Count': 'Quantidade', 'Legend': 'Fabricante/Modelo'})
-
-    fig.update_layout(barmode='stack')  # Barras empilhadas
-    fig.update_layout(height=500, width=1000)
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def format_cell_value(x):
@@ -187,7 +149,7 @@ def analise_fabricante_aeronaves_detalhes_tabela(data_frame):
 
     return st.dataframe(formatted_table.style.set_properties(**{'background-color': 'black',
                            'color': 'lawngreen',
-                           'border-color': 'white'}).apply(highlight_max))
+                           'border-color': 'white'}).apply(highlight_max), use_container_width=True)
 
 
 # Aplicando cores alternadas usando o método styler
@@ -198,9 +160,6 @@ def highlight_odd_rows(row):
         return ['background-color: black'] * len(row)
 
 def highlight_max(s):
-    '''
-    highlight the maximum in a Series yellow.
-    '''
     is_max = s == s.max()
     return ['background-color: blue; color: white' if v else '' for v in is_max]
 

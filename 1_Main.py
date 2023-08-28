@@ -1,8 +1,13 @@
 import time
+import folium
+from folium import plugins
 import pandas as pd
 import streamlit as st
+from streamlit_folium import folium_static
+
 import custom.functions as custom
 import custom.mapas as custom_mapas
+import custom.route as rota
 
 st.set_page_config(
     page_title="Air accident investigation data analysis application",
@@ -65,9 +70,12 @@ if __name__ == "__main__":
         default_aircraft = unique_aircraft_types[0]
         aircraft_filter = st.sidebar.multiselect("Tipo de Aeronave:", unique_aircraft_types, default=default_aircraft)
 
+        dataset_filtered["Y"] = pd.to_datetime(dataset_filtered["Date"], format="%d/%m/%Y")
 
-        dataset_filtered = dataset_filtered[(dataset_filtered["Date"].dt.year >= year_filter[0]) &
-                                            (dataset_filtered["Date"].dt.year <= year_filter[1])]
+        dataset_filtered = dataset_filtered[(dataset_filtered["Y"].dt.year >= year_filter[0]) &
+                                            (dataset_filtered["Y"].dt.year <= year_filter[1])]
+
+        dataset_filtered = dataset_filtered.drop("Y", axis=1)
 
         dataset_filtered = dataset_filtered[(dataset_filtered["Fatalities"] >= fatalities_filter[0]) &
                                             (dataset_filtered["Fatalities"] <= fatalities_filter[1])]
@@ -82,7 +90,13 @@ if __name__ == "__main__":
         if aircraft_filter:
             dataset_filtered = dataset_filtered[dataset_filtered["Aircraft Category"].str.strip().isin(aircraft_filter)]
 
-        st.write("Tabela:", dataset_filtered)
+        tab1, tab2 = st.tabs(["Tabela", "Mapa"])
+
+        with tab1:
+            st.write("Tabela:", dataset_filtered)
+        with tab2:
+            rota.mostra_local(dataset_filtered)
+
 
         # Exibir o gráfico
         custom_mapas.analise_acidentes_plotly(dataset_filtered)
@@ -91,13 +105,12 @@ if __name__ == "__main__":
 
         custom_mapas.analise_aeronaves(dataset_filtered)
 
-        tab1, tab2 = st.tabs(["Fabricantes", "Detalhes"])
+        tab3, tab4 = st.tabs(["Fabricantes", "Detalhes"])
 
-        with tab1:
+        with tab3:
             custom_mapas.analise_fabricante_aeronaves(dataset_filtered)
-        with tab2:
+        with tab4:
             custom_mapas.analise_fabricante_aeronaves_detalhes_tabela(dataset_filtered)
 
         # Link para o GitHub
         st.sidebar.markdown("[GitHub Repository](https://github.com/gbaere)")
-        st.sidebar.markdown(f"Visitantes: {st.session_state.visit_count}")
