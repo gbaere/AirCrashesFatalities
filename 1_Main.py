@@ -1,8 +1,6 @@
 import time
-
 import pandas as pd
 import streamlit as st
-
 import custom.functions as custom
 import custom.mapas as custom_mapas
 import custom.route as rota

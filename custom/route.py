@@ -2,7 +2,6 @@ import folium
 from folium import plugins
 from streamlit_folium import folium_static
 
-
 def mostra_local(data_frame):
 
     data_frame.drop(data_frame[data_frame['Latitude'].astype(float) == 0].index, inplace=True)
