@@ -1,5 +1,7 @@
-folium==0.14.0
-pandas==2.0.3
-plotly==5.16.1
-streamlit==1.25.0
-setuptools==68.0.0
+folium
+pandas
+plotly
+plotly.express
+streamlit
+streamlit_folium
+setuptools
