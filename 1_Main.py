@@ -1,9 +1,7 @@
 import time
-import folium
-from folium import plugins
+
 import pandas as pd
 import streamlit as st
-from streamlit_folium import folium_static
 
 import custom.functions as custom
 import custom.mapas as custom_mapas

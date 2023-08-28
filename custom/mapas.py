@@ -1,6 +1,7 @@
-import streamlit as st
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+import streamlit as st
+
 
 def analise_acidentes_plotly(data_frame):
     data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%d/%m/%Y')
