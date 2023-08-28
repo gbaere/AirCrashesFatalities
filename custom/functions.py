@@ -14,6 +14,9 @@ def load_and_process_data():
 
     dataset = dataset.drop(['latitude_srt', 'longitude_srt'], axis=1)
 
+    dataset['Date'] = pd.to_datetime(dataset['Date'], format='%d/%m/%Y')
+    dataset['Date'] = dataset['Date'].dt.strftime('%d/%m/%Y')
+
     return dataset
 
 

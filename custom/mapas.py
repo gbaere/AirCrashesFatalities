@@ -1,27 +1,29 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 def analise_acidentes_plotly(data_frame):
-    # Convertendo a coluna Date para o formato de data
-    data_frame['Date'] = pd.to_datetime(data_frame['Date'], format='%d/%m/%Y')
 
-    # Transformando a coluna Date em ano
-    data_frame['Crash.Year'] = data_frame['Date'].dt.year
+    data_frame['ANO'] = data_frame['Date'].dt.year
+    data_frame['INVESTIGATION'] = data_frame["Investigation Type"].str.strip()
 
-    # Contando os tipos de Investigation Type por ano
-    grouped_data = data_frame.groupby(['Crash.Year', 'Investigation Type'])['Investigation Type'].count().unstack(fill_value=0).reset_index()
+    grouped_data = data_frame.groupby(['ANO', 'INVESTIGATION'])['INVESTIGATION'].count().unstack(fill_value=0).reset_index()
 
     # Criando o gráfico com Plotly Express
     fig = px.line(grouped_data,
-                  x='Crash.Year',
-                  y=data_frame['Investigation Type'].unique(),
-                  title='Tipos de eventos no período',
-                  labels={'Crash.Year': 'Ano', 'value': 'Quantidade'})
+                  x='ANO',
+                  y=grouped_data.columns[1:],  # Colunas que representam os tipos de investigação
+                  title='Ocorrências',
+                  labels={'value': 'QUANTIDADE'})
 
-    fig.update_layout(height=500, width=1000)
-    st.plotly_chart(fig)
+    fig.update_xaxes(
+        dtick="M12",  # Intervalo de 12 meses (1 ano)
+        tickformat="%b %Y"  # Formato: Mês Ano com quatro dígitos
+    )
+
+    st.plotly_chart(fig ,use_container_width=True)
 
 
 def analise_fatalidade_e_lesoes(data_frame):
